@@ -1,0 +1,40 @@
+/* src/Components/main.css */
+.main-container {
+    display: flex;
+  }
+  
+  .sidenav {
+    height: 100vh;
+    width: 200px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #111;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+  }
+  
+  .sidenav .nav-button {
+    padding: 10px 20px;
+    margin: 10px 0;
+    width: 100%;
+    background-color: #333;
+    color: white;
+    border: none;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+  }
+  
+  .sidenav .nav-button:hover {
+    background-color: #575757;
+  }
+  
+  .content {
+    margin-left: 200px; /* Same as sidenav width */
+    padding: 20px;
+    flex-grow: 1;
+  }
+  
