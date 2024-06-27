@@ -6,10 +6,18 @@ import os
 import shutil
 import tempfile
 
+print(f"sys0", sys.argv[0])
+print(f"sys1", sys.argv[1])
+print(f"sys2", sys.argv[2])
+
+
+
+
 print("Superimposer.py has been triggered!")
 print(sys.argv[1])
 print(f"Zip images to superimpose located at:", sys.argv[2])
 
+tokenamount = int(sys.argv[3])
 directory_to_save = sys.argv[1]
 zip_images_to_superimpose_location = sys.argv[2]
 random_images_zip_location = "E:\TauriEDrive\ProjectGenisis\src-tauri\RandomImages\puppies.zip"
@@ -26,9 +34,9 @@ os.makedirs(file_path_png_unzipped, exist_ok=True)
 
 # Unzip first 20 files from puppies.zip
 with zipfile.ZipFile(random_images_zip_location, 'r') as zip_ref:
-    # Get the first 20 image files
-    first_20_files = zip_ref.namelist()[:20]
-    for file_name in first_20_files:
+    # Get only the amount of images that are necesarry
+    first_tokenamount_of_files = zip_ref.namelist()[:tokenamount]
+    for file_name in first_tokenamount_of_files:
         zip_ref.extract(file_name, file_path_random_images_unzipped)
 print("extracted first 20 random images from puppies.zip")
 
@@ -47,7 +55,7 @@ random_image_files = [f for f in os.listdir(file_path_random_images_unzipped)]
 counter = 0
 
 for random_image_file in random_image_files:
-    if counter < 20:
+    if counter < tokenamount:
         print(random_image_file)
         random_image_path = os.path.join(file_path_random_images_unzipped, random_image_file)
         random_image = Image.open(random_image_path)

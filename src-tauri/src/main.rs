@@ -19,6 +19,7 @@ struct FileUpload {
 struct FileUploadSuperimpose {
     filename: String,
     data: String,
+    amount: String,
 }
 
 
@@ -49,8 +50,7 @@ fn save_user_directories(directories: UserChosenDirectory) -> Result<(), String>
 
 
 
-
-#[tauri::command] // Command for superimposing images
+#[tauri::command]
 fn superimpose_user_images(file_uploads_superimpose: Vec<FileUploadSuperimpose>) -> Result<(), String> {
     let (superimpose_dir, _) = read_user_directories()?;
     let uploads_superimpose = "E:\\TauriEDrive\\ProjectGenisis\\src-tauri"; // add path here
@@ -78,17 +78,23 @@ fn superimpose_user_images(file_uploads_superimpose: Vec<FileUploadSuperimpose>)
 
     zip_superimpose.finish().map_err(|e| format!("Failed to finish zip file: {:?}", e))?;
 
-    if let Some(_first_upload) = file_uploads_superimpose.first() {
+    if let Some(first_upload) = file_uploads_superimpose.first() {
         let python_executable = "python";
         let script_path = "E:\\TauriEDrive\\ProjectGenisis\\src-tauri\\src\\Superimposer.py";
         let create_no_window = 0x08000000;
+
+        // Extract the amount from the first file upload
+        let amount = &first_upload.amount;
+
+        
 
         let output = Command::new(python_executable)
             .arg(script_path)
             .arg(superimpose_dir)
             .arg(upload_dir_superimpose)
+            .arg(amount)  // Pass the amount to the Python script
             .stdin(Stdio::null())
-            .stdout(Stdio::null())
+            .stdout(Stdio::null()) // ihave no clue why its not printing even when i do Stdio::piped
             .stderr(Stdio::null())
             .creation_flags(create_no_window)
             .output()
@@ -105,6 +111,8 @@ fn superimpose_user_images(file_uploads_superimpose: Vec<FileUploadSuperimpose>)
 
     Ok(())
 }
+
+
 
 
 #[tauri::command]

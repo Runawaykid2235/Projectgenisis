@@ -6,6 +6,7 @@ import './main.css'
 const Superimposer = () => {
   const [message, setMessage] = useState('');
   const [files, setFiles] = useState([]);
+  const [amount, setAmount] = useState("40"); // Add state for amount
 
   const handleFileChange = (event) => {
     const selectedFiles = event.target.files;
@@ -16,7 +17,7 @@ const Superimposer = () => {
         const reader = new FileReader();
         reader.onload = () => {
           const base64Data = reader.result.split(',')[1]; // Extract base64 data
-          resolve({ filename: file.name, data: base64Data });
+          resolve({ filename: file.name, data: base64Data, amount: amount }); // Include amount here
         };
         reader.readAsDataURL(file);
       });
