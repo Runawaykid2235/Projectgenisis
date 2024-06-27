@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::fs::{self, File};
+use std::{fs::{self, File}, os::windows::process::CommandExt};
 use tauri::api::path::document_dir;
 use std::io::Write;
 use zip::write::FileOptions;
@@ -44,11 +44,15 @@ fn save_user_directories(directories: UserChosenDirectory) -> Result<(), String>
     Ok(())
 }
 
+//we need to create directories on the users device but im unsure of how
+
+
+
 
 
 #[tauri::command] // Command for superimposing images
 fn superimpose_user_images(file_uploads_superimpose: Vec<FileUploadSuperimpose>) -> Result<(), String> {
-    let (superimpose_dir, _) = read_user_directories()?; // TODO the read user directories should be passed to superimposer.py NOT saved to this
+    let (superimpose_dir, _) = read_user_directories()?;
     let uploads_superimpose = "E:\\TauriEDrive\\ProjectGenisis\\src-tauri"; // add path here
 
     let upload_dir_superimpose = format!("{}\\uploads_superimpose", uploads_superimpose); 
@@ -77,12 +81,16 @@ fn superimpose_user_images(file_uploads_superimpose: Vec<FileUploadSuperimpose>)
     if let Some(_first_upload) = file_uploads_superimpose.first() {
         let python_executable = "python";
         let script_path = "E:\\TauriEDrive\\ProjectGenisis\\src-tauri\\src\\Superimposer.py";
+        let create_no_window = 0x08000000;
 
         let output = Command::new(python_executable)
             .arg(script_path)
             .arg(superimpose_dir)
             .arg(upload_dir_superimpose)
-            .stdout(Stdio::piped())
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .creation_flags(create_no_window)
             .output()
             .map_err(|e| format!("Failed to execute Python script: {:?}", e))?;
 

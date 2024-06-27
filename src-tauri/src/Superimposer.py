@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw
 import random
 import os
 import shutil
+import tempfile
 
 print("Superimposer.py has been triggered!")
 print(sys.argv[1])
@@ -13,12 +14,8 @@ directory_to_save = sys.argv[1]
 zip_images_to_superimpose_location = sys.argv[2]
 random_images_zip_location = "E:\TauriEDrive\ProjectGenisis\src-tauri\RandomImages\puppies.zip"
 
-# Directory for images
-file_path_random_images_zip = random_images_zip_location
-file_path_png_images_zip = zip_images_to_superimpose_location + r'\uploaded_files_superimpose.zip'
-
-# Unzip files
-tmp_path = r'src-tauri\uploads_superimpose\tmp'
+# Use the system's temporary directory
+tmp_path = tempfile.mkdtemp()
 
 # Create paths for extracted images
 file_path_random_images_unzipped = os.path.join(tmp_path, 'random_images_unzipped')
@@ -28,7 +25,7 @@ file_path_png_unzipped = os.path.join(tmp_path, 'png_unzipped')
 os.makedirs(file_path_png_unzipped, exist_ok=True)
 
 # Unzip first 20 files from puppies.zip
-with zipfile.ZipFile(file_path_random_images_zip, 'r') as zip_ref:
+with zipfile.ZipFile(random_images_zip_location, 'r') as zip_ref:
     # Get the first 20 image files
     first_20_files = zip_ref.namelist()[:20]
     for file_name in first_20_files:
@@ -36,6 +33,7 @@ with zipfile.ZipFile(file_path_random_images_zip, 'r') as zip_ref:
 print("extracted first 20 random images from puppies.zip")
 
 # Unzip user-provided images
+file_path_png_images_zip = os.path.join(zip_images_to_superimpose_location, 'uploaded_files_superimpose.zip')
 with zipfile.ZipFile(file_path_png_images_zip, 'r') as zip_ref:
     zip_ref.extractall(file_path_png_unzipped)
 print("extracted user-provided images")
@@ -54,16 +52,16 @@ for random_image_file in random_image_files:
         random_image_path = os.path.join(file_path_random_images_unzipped, random_image_file)
         random_image = Image.open(random_image_path)
 
-        #create blank mask
+        # Create blank mask
         mask = Image.new('L', random_image.size, 0)
         draw = ImageDraw.Draw(mask)
 
-        #choose a random png to superimpose
+        # Choose a random png to superimpose
         png_image_file = random.choice(png_image_files)
         png_image_path = os.path.join(file_path_png_unzipped, png_image_file)
         png_image = Image.open(png_image_path)
 
-        #random transform and scale
+        # Random transform and scale
         random_rotation = random_number(360)
         rotated_png = png_image.rotate(random_rotation, resample=Image.BICUBIC, expand=True)
 
@@ -127,9 +125,10 @@ shutil.move(image_directory, combined_tmp_path)
 final_zip_path = os.path.join(directory_to_save, 'mainzipfile')
 shutil.make_archive(final_zip_path, 'zip', combined_tmp_path)
 
-# Delete the combined_tmp folder
+# Clean up temporary directories
 shutil.rmtree(combined_tmp_path)
 shutil.rmtree(file_path_random_images_unzipped)
 shutil.rmtree(file_path_png_unzipped)
+shutil.rmtree(tmp_path)
 
 print(f"Final step completed: zipped both folders into '{final_zip_path}'.")
