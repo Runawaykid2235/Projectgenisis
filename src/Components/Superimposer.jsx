@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import Sidenav from './sidenav';
-import './main.css'
+import './main.css';
 
 const Superimposer = () => {
   const [message, setMessage] = useState('');
   const [files, setFiles] = useState([]);
-  const [amount, setAmount] = useState("40"); // Add state for amount
+  const [amount, setAmount] = useState(''); // Initial state for amount is empty
 
   const handleFileChange = (event) => {
     const selectedFiles = event.target.files;
@@ -49,6 +49,12 @@ const Superimposer = () => {
       <div className='content'>
         <h1>Superimpose User Images</h1>
         <input type="file" multiple onChange={handleFileChange} />
+        <input 
+          type="text" 
+          placeholder="Enter amount" 
+          value={amount} 
+          onChange={(e) => setAmount(e.target.value)} 
+        />
         <button onClick={handleSubmit}>Send Files</button>
         {message && <p>{message}</p>}
       </div>
