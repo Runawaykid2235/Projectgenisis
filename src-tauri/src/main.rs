@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{fs::{self, File}, os::windows::process::CommandExt};
+use std::{env, fs::{self, File}, os::windows::process::CommandExt};
 use tauri::api::path::document_dir;
 use std::io::Write;
 use zip::write::FileOptions;
@@ -18,7 +18,9 @@ struct FileUpload {
 #[derive(serde::Deserialize, Debug)]
 struct FileUploadSuperimpose {
     filename: String,
+    filename2: String,
     data: String,
+    data2: String,
     amount: String,
 }
 
@@ -45,22 +47,23 @@ fn save_user_directories(directories: UserChosenDirectory) -> Result<(), String>
     Ok(())
 }
 
-//we need to create directories on the users device but im unsure of how
-
-
-
 
 #[tauri::command]
 fn superimpose_user_images(file_uploads_superimpose: Vec<FileUploadSuperimpose>) -> Result<(), String> {
-    let (superimpose_dir, _) = read_user_directories()?;
-    let uploads_superimpose = "E:\\TauriEDrive\\ProjectGenisis\\src-tauri"; // add path here
+    // First get user's temporary directory
+    let temp_dir = env::temp_dir();
+    let augment_pro_dir = temp_dir.join("AugmentPro");
+    let upload_dir_superimpose = augment_pro_dir.join("Uploads_superimpose");
 
-    let upload_dir_superimpose = format!("{}\\uploads_superimpose", uploads_superimpose); 
+    // Create the directories if they don't exist
     if let Err(err) = fs::create_dir_all(&upload_dir_superimpose) {
-        return Err(format!("Failed to create superimposer upload directory: {:?}", err));
+        return Err(format!("Failed to create upload directory: {:?}", err));
     }
 
-    let zip_path_superimposer = format!("{}/uploaded_files_superimpose.zip", upload_dir_superimpose);
+    // Get the path where the user wishes to save the final superimposed images to (These are later passed to the superimposer.py)
+    let (superimpose_dir, _) = read_user_directories()?;
+
+    let zip_path_superimposer = upload_dir_superimpose.join("uploaded_files_superimpose.zip");
     let zip_file_superimposer = File::create(&zip_path_superimposer)
         .map_err(|e| format!("Failed to create zip file: {:?}", e))?;
     let mut zip_superimpose = zip::ZipWriter::new(zip_file_superimposer);
@@ -76,7 +79,32 @@ fn superimpose_user_images(file_uploads_superimpose: Vec<FileUploadSuperimpose>)
             .map_err(|e| format!("Failed to write to zip file: {:?}", e))?;
     }
 
+    // Do the same but for the images to superimpose onto
+    let upload_random_images_to_superimpose_onto = augment_pro_dir.join("Uploads_to_superimpose_onto");
+
+    // Create the directories if they don't exist
+    if let Err(err) = fs::create_dir_all(&upload_random_images_to_superimpose_onto) {
+        return Err(format!("Failed to create a directory for random images to superimpose onto: {:?}", err));
+    }
+
+    let zip_path_random_images_to_superimpose_onto = upload_random_images_to_superimpose_onto.join("uploaded_files_to_superimpose_onto.zip");
+    let zip_file_random_images_to_superimpose_onto = File::create(&zip_path_random_images_to_superimpose_onto)
+        .map_err(|e| format!("Failed to create zip file: {:?}", e))?;
+    let mut zip_random_images_to_superimpose_onto = zip::ZipWriter::new(zip_file_random_images_to_superimpose_onto);
+
+    for file_upload in &file_uploads_superimpose {
+        let filename_superimpose_onto = &file_upload.filename2;
+        let decoded_data_fileupload_onto = base64::decode(&file_upload.data2)
+            .map_err(|e| format!("Base64 decode error: {:?}", e))?;
+
+        zip_random_images_to_superimpose_onto.start_file(filename_superimpose_onto, FileOptions::default())
+            .map_err(|e| format!("Failed to start file in zip: {:?}", e))?;
+        zip_random_images_to_superimpose_onto.write_all(&decoded_data_fileupload_onto)
+            .map_err(|e| format!("Failed to write to zip file: {:?}", e))?;
+    }
+
     zip_superimpose.finish().map_err(|e| format!("Failed to finish zip file: {:?}", e))?;
+    zip_random_images_to_superimpose_onto.finish().map_err(|e| format!("Failed to finish zip file: {:?}", e))?;
 
     if let Some(first_upload) = file_uploads_superimpose.first() {
         let python_executable = "python";
@@ -86,16 +114,24 @@ fn superimpose_user_images(file_uploads_superimpose: Vec<FileUploadSuperimpose>)
         // Extract the amount from the first file upload
         let amount = &first_upload.amount;
 
-        
+        println!("script_path = {:?}", script_path);
+        println!("superimpose_dir = {:?}", superimpose_dir);
+        println!("upload_dir_superimpose = {:?}", upload_dir_superimpose);
+        println!("upload_random_images_to_superimpose_onto = {:?}", upload_random_images_to_superimpose_onto);
+        println!("amount = {:?}", amount);
 
+
+
+        
         let output = Command::new(python_executable)
             .arg(script_path)
             .arg(superimpose_dir)
             .arg(upload_dir_superimpose)
             .arg(amount)  // Pass the amount to the Python script
+            .arg(upload_random_images_to_superimpose_onto)  // Pass the directory with the second set of images
             .stdin(Stdio::null())
-            .stdout(Stdio::null()) // ihave no clue why its not printing even when i do Stdio::piped
-            .stderr(Stdio::null())
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
             .creation_flags(create_no_window)
             .output()
             .map_err(|e| format!("Failed to execute Python script: {:?}", e))?;
@@ -111,7 +147,6 @@ fn superimpose_user_images(file_uploads_superimpose: Vec<FileUploadSuperimpose>)
 
     Ok(())
 }
-
 
 
 

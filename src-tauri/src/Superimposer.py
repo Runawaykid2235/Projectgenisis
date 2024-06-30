@@ -6,21 +6,12 @@ import os
 import shutil
 import tempfile
 
-print(f"sys0", sys.argv[0])
-print(f"sys1", sys.argv[1])
-print(f"sys2", sys.argv[2])
 
-
-
-
-print("Superimposer.py has been triggered!")
-print(sys.argv[1])
-print(f"Zip images to superimpose located at:", sys.argv[2])
-
-tokenamount = int(sys.argv[3])
 directory_to_save = sys.argv[1]
 zip_images_to_superimpose_location = sys.argv[2]
-random_images_zip_location = "E:\TauriEDrive\ProjectGenisis\src-tauri\RandomImages\puppies.zip"
+tokenamount = int(sys.argv[3])
+random_images_zip_location = os.path.join(sys.argv[4], "uploaded_files_to_superimpose_onto.zip")
+
 
 # Use the system's temporary directory
 tmp_path = tempfile.mkdtemp()
@@ -40,12 +31,17 @@ with zipfile.ZipFile(random_images_zip_location, 'r') as zip_ref:
         zip_ref.extract(file_name, file_path_random_images_unzipped)
 print("extracted first 20 random images from puppies.zip")
 
-# Unzip user-provided images
-file_path_png_images_zip = os.path.join(zip_images_to_superimpose_location, 'uploaded_files_superimpose.zip')
-with zipfile.ZipFile(file_path_png_images_zip, 'r') as zip_ref:
-    zip_ref.extractall(file_path_png_unzipped)
-print("extracted user-provided images")
+try:
+    # Unzip user-provided images
+    file_path_png_images_zip = os.path.join(zip_images_to_superimpose_location, 'uploaded_files_superimpose.zip')
+    with zipfile.ZipFile(file_path_png_images_zip, 'r') as zip_ref:
+        zip_ref.extractall(file_path_png_unzipped)
+    print("extracted user-provided images")
+except:
+    print("failure")
 
+
+    
 def random_number(limit):
     return random.uniform(0.1, limit)
 
