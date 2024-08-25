@@ -25,7 +25,7 @@ os.makedirs(file_path_png_unzipped, exist_ok=True)
 
 # Unzip first 20 files from puppies.zip
 with zipfile.ZipFile(random_images_zip_location, 'r') as zip_ref:
-    # Get only the amount of images that are necesarry
+    # Get only the amount of images that are necesarryt
     first_tokenamount_of_files = zip_ref.namelist()[:tokenamount]
     for file_name in first_tokenamount_of_files:
         zip_ref.extract(file_name, file_path_random_images_unzipped)
